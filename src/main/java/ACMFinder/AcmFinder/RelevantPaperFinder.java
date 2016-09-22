@@ -28,12 +28,12 @@ public class RelevantPaperFinder {
 
 		//session.run( "CREATE (a:Person {name:'Arthur', title:'King'})" );
 
-		System.out.println("*** Finding Relevant Papers for Author: " + AuthorID + " ***");
+		//System.out.println("*** Finding Relevant Papers for Author: " + AuthorID + " ***");
 		
 		StatementResult result = session.run( "MATCH (n:paper)-[r:writtenby]->(a:author) WHERE a.id = '"+ AuthorID +"' RETURN n.acmID as ID");
 		//StatementResult result = session.run( "MATCH (n:paper) -WHERE a.name = 'Arthur' RETURN a.name AS name, a.title AS title" );
 		
-		System.out.println("\n\nPapers Written By the Author: ");
+		//System.out.println("\n\nPapers Written By the Author: ");
 		while ( result.hasNext() )
 		{
 		    Record record = result.next();
@@ -42,6 +42,41 @@ public class RelevantPaperFinder {
 		}
 
 		return papersByAuthor;
+	}
+	
+	public List<String> getTargetPapers(String authorID)
+	{
+		List<String> targetPapers = new ArrayList<String>();
+		
+		targetPapers.addAll(this.getTargetPapersAtDepth(authorID, 3, 3));
+		targetPapers.addAll(this.getTargetPapersAtDepth(authorID, 4, 3));
+		targetPapers.addAll(this.getTargetPapersAtDepth(authorID, 7, 3));
+		targetPapers.addAll(this.getTargetPapersAtDepth(authorID, 8, 3));
+		targetPapers.addAll(this.getTargetPapersAtDepth(authorID, 10, 3));
+		
+		return targetPapers;
+	}
+	
+	private List<String> getTargetPapersAtDepth(String authorID, int depth, int paperCount)
+	{
+		List<String> targetPapers = new ArrayList<String>();
+		
+		String query = "MATCH (a:author {id:'%s'})<-[:writtenby]-(p1:paper)-[*%d]-(p2:paper) RETURN p2.acmID as ID LIMIT %d";
+		query = String.format(query, authorID, depth, paperCount);
+		
+		Driver driver = GraphDatabase.driver( "bolt://localhost", AuthTokens.basic( "neo4j", "password" ) );
+		Session session = driver.session();
+
+		StatementResult result = session.run(query);
+		
+		while (result.hasNext())
+		{
+		    Record record = result.next();
+		    String paperID = record.get( "ID" ).asString();
+		    targetPapers.add(paperID);	
+		}
+		
+		return targetPapers;
 	}
 	
 	public void getRelevantPaperIds(String AuthorID)
