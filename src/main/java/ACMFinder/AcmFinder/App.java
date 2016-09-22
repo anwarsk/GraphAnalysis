@@ -10,7 +10,7 @@ public class App
 {
     public static void main( String[] args )
     {
-        RelevantPaperFInder finder = new RelevantPaperFInder();
+        RelevantPaperFinder finder = new RelevantPaperFinder();
         finder.getRelevantPaperIds(Constants.AUTHOR_ID);
     }
 }

@@ -10,9 +10,39 @@ import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 
-public class RelevantPaperFInder {
+public class RelevantPaperFinder {
 	
 //	public Map<String, Integer>
+	
+	/**
+	 * This function returns list of papers written by the author.
+	 * @param AuthorID
+	 * @return
+	 */
+	public List<String> getPapersWrittenByAuthor(String AuthorID)
+	{
+		List<String> papersByAuthor = new ArrayList<String>();
+		
+		Driver driver = GraphDatabase.driver( "bolt://localhost", AuthTokens.basic( "neo4j", "password" ) );
+		Session session = driver.session();
+
+		//session.run( "CREATE (a:Person {name:'Arthur', title:'King'})" );
+
+		System.out.println("*** Finding Relevant Papers for Author: " + AuthorID + " ***");
+		
+		StatementResult result = session.run( "MATCH (n:paper)-[r:writtenby]->(a:author) WHERE a.id = '"+ AuthorID +"' RETURN n.acmID as ID");
+		//StatementResult result = session.run( "MATCH (n:paper) -WHERE a.name = 'Arthur' RETURN a.name AS name, a.title AS title" );
+		
+		System.out.println("\n\nPapers Written By the Author: ");
+		while ( result.hasNext() )
+		{
+		    Record record = result.next();
+		    String paperID = record.get( "ID" ).asString();
+		    papersByAuthor.add(paperID);	
+		}
+
+		return papersByAuthor;
+	}
 	
 	public void getRelevantPaperIds(String AuthorID)
 	{
