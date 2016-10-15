@@ -1,4 +1,4 @@
-package ACMFinder.AcmFinder;
+package exec;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -7,59 +7,31 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import ACMFinder.constants.Constants;
-import sigir.Author;
-import sigir.KeyTopicPath;
-import sigir.Paper;
-import sigir.SQLAccessLayer;
+import constant.Constants;
+import data.Author;
+import data.KeyTopicPath;
+import data.Paper;
+import dbLayer.SQLAccessLayer;
+import graphminer.KeyNodeFinder;
 
-/**
- * Hello world!
- *
- */
 public class App 
 {
 	public static void main( String[] args ) throws FileNotFoundException
 	{
-		//        RelevantPaperFinder finder = new RelevantPaperFinder();
-		//        List<String> authorPapers = finder.getPapersWrittenByAuthor(Constants.AUTHOR_ID);
-		//        List<String> targetPapers = finder.getTargetPapers(Constants.AUTHOR_ID);
-		//        
-		//        // Select random 10 papers out of 100
-		//        Collections.shuffle(authorPapers);
-		//        authorPapers = authorPapers.subList(0, 10);
-		//        
-		//        System.out.println("AuthorPapers-");
-		//        System.out.println(authorPapers);
-		//        
-		//        System.out.println("\nTargetPapers-");
-		//        System.out.println(targetPapers);
-		//        
-		//        //PathFinder pathFinder = new PathFinder();
-		//        //pathFinder.getPathBetweenNodes(Constants.AUTHOR_ID, targetPapers.get(0));
-		//        
-		//        KeyNodeFinder keyNodeFinder = new KeyNodeFinder();
-		//        keyNodeFinder.findKeyNodesInPath(authorPapers, targetPapers);
-		//  
-
-
 
 		List<Author> authors = new ArrayList<Author>();
-		//RelevantPaperFinder finder = new RelevantPaperFinder();
 		SQLAccessLayer accessLayer = new SQLAccessLayer();
 
-
+		/** TO-TEST:
 		Set<String> testSet = new HashSet<String>();
 		testSet.add("T_606");
 		testSet.add("T_607");
 		testSet.add("T_608");
-
 		System.out.println("testSet :" + accessLayer.getListOfKeywords(testSet));
-
-
+		**/
+		
 		for (int authorIndex = 0; authorIndex < Constants.AUTHOR_FIRST_NAMES.length; authorIndex++)
 		{
-			//			int authorIndex = 2;
 			Author author = new Author();
 			List<String> authorIDs = accessLayer.getListOfAuthorIDs(Constants.AUTHOR_FIRST_NAMES[authorIndex], Constants.AUTHOR_LAST_NAMES[authorIndex]);
 
@@ -69,22 +41,18 @@ public class App
 
 			for(String authorID : authorIDs)
 			{
+				System.out.println("\nFetching Papers for Author- " + author.firstName);
 				List<String> authorPapers = accessLayer.getPapersWrittenByAuthor(authorID);
-
 				author.writtenPaperACMIds.addAll(authorPapers);
+				System.out.println(String.format("Retrieved Total %d papers.", authorPapers.size()));
 			}
-			List<String> toRemove = new ArrayList<String>();
-			toRemove.add("null");
-			toRemove.add("");
-			toRemove.add(null);
+			
 
-			author.writtenPaperACMIds.removeAll(toRemove);
 			authors.add(author);
-			System.out.println("PAPERS: " + author.writtenPaperACMIds);
-			System.out.println("Author Papers:\n" + author.writtenPaperACMIds.size());
 		}
 
 
+		System.out.println("Fetching Papers for SIGIR 2006");
 		List<Paper> sigr2006Papers = accessLayer.getListOfPapersforConference(Constants.SIGIR_2006_COFERENCE);
 		//List<Paper> sigr2008Papers = accessLayer.getListOfPapersforConference(Constants.SIGIR_2008_COFERENCE);
 
@@ -92,20 +60,23 @@ public class App
 
 		for(Author author : authors)
 		{
+			System.out.println("Processing conference for author- " + author.firstName);
+			
 			keyNodeFinder.findKeyNodesForAuthorAndConference(author, sigr2006Papers);
-			//writeAuthorDataToFile(author);
 
-			System.out.println("**** SUMMARY ****");
-			System.out.println("\n\n\nAuthorName: " + author.firstName);
-			System.out.println("Top10Papers: " + author.paperIDToRWProability);
-			//System.out.println("Top10");
+//			System.out.println("**** SUMMARY ****");
+//			System.out.println("\n\n\nAuthorName: " + author.firstName);
+//			System.out.println("Top10Papers: " + author.paperIDToRWProability);
+//			System.out.println("Top10");
 		}
 
 		for (Author author : authors)
 		{
-			String outputFile = String.format(Constants.OUTPUT_DIRECTORY, author.firstName, author.lastName) ;
+			String outputFile = String.format(Constants.OUTPUT_FILE_PATH, author.firstName, author.lastName);
+			
 			PrintWriter outputFileWriter = new PrintWriter(outputFile);
 			outputFileWriter.print(String.format("\n\t *** TOP-10 PAPERS FOR %s %s in SIGIR2006 Conference ***\n",author.firstName, author.lastName ));
+			
 			int paperIndex = 1;
 			for(String paperID : author.paperIDToRWProability.keySet())
 			{
@@ -134,18 +105,8 @@ public class App
 			outputFileWriter.close();
 
 		}
-		//
-		//		ObjectOutputStream oos = null;
-		//		FileOutputStream fout = null;
-		//		try{
-		//			 fout = new FileOutputStream("/home/anwar/outputFile.ser", true);
-		//			 oos = new ObjectOutputStream(fout);
-		//			oos.writeObject(authors);
-		//			oos.close();
-		//		} catch (Exception ex) {
-		//			ex.printStackTrace();
-		//		}
-		System.out.println("Processsing is done!!!");
+	
+		System.out.println("Processsing is Completed !!!");
 
 	}
 
