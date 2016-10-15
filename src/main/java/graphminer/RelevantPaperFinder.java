@@ -1,4 +1,4 @@
-package ACMFinder.AcmFinder;
+package graphminer;
 
 import java.util.ArrayList;
 import java.util.Collections;

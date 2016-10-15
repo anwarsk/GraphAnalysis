@@ -1,4 +1,4 @@
-package ACMFinder.AcmFinder;
+package graphminer;
 
 import java.io.File;
 
@@ -16,7 +16,7 @@ import org.neo4j.graphdb.PathExpanders;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 
-import ACMFinder.constants.Constants;
+import constant.Constants;
 
 public class PathFinder {
 
