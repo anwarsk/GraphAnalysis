@@ -173,6 +173,8 @@ public class SQLAccessLayer {
 	
 	public List<String> getListOfKeywords(Set<String> topics)
 	{
+		assert topics != null & topics.isEmpty() == false : "Invalid list of topics";
+		
 		String query = "select keyword from keyword where id in (%s)";
 		List<String> keywords = new ArrayList<String>();
 
@@ -239,15 +241,15 @@ public class SQLAccessLayer {
 		return keywords;
 	}
 	
-	public List<String> getPapersWrittenByAuthor(String authorID)
+	public List<String> getPapersWrittenByAuthor(List<String> authorIDs)
 	{
-		assert authorID != null & !authorID.isEmpty() : "Invalid Author ID: " + authorID;
+		assert authorIDs != null & !authorIDs.isEmpty() : "Invalid Author ID: " + authorIDs;
 		
-		String query = "select paper_id from paper_author where author_id = %s";
+		String query = "select paper_id from paper_author where author_id in (%s)";
 		List<String> paperIds = new ArrayList<String>();
 
 	
-		query = String.format(query, authorID);
+		query = String.format(query, StringUtils.join(authorIDs, ','));
 		System.out.println("Executing query:" + query);
 		Connection conn = null;
 		Statement stmt = null;

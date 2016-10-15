@@ -16,7 +16,6 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.PathExpanderBuilder;
-import org.neo4j.graphdb.PathExpanders;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
@@ -40,7 +39,7 @@ public class KeyNodeFinder {
 		int batchSize = 16;
 		int processedPapers = 0;
 		PathFinderHelper pathFinderHelper;
-		while(processedPapers < 36)//conferencePapers.size())
+		while(processedPapers < conferencePapers.size())
 		{
 			try
 			{
@@ -304,7 +303,7 @@ class PathFinderHelper implements Runnable{
 			databaseDirectory = new File(Constants.NEO_GRAPH_DB_PATH);
 			dbService =  new GraphDatabaseFactory().newEmbeddedDatabase(databaseDirectory);
 		}
-		System.out.println("Starting new thread");
+		//System.out.println("Starting new thread");
 		if (t == null) {
 			t = new Thread(this);
 			t.start ();
