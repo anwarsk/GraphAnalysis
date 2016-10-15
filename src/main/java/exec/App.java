@@ -83,16 +83,16 @@ public class App
 					{
 						Paper paper = keyTopicPath.paper;
 						Set<String> topicIds = keyTopicPath.topicIDtoProbabilityMap.keySet();
-
+						String keywords = "";
+						String outputLine = "%d\t%s\t%s";
 						if(topicIds != null & topicIds.isEmpty() == false)
 						{
 							List<String> topics = accessLayer.getListOfKeywords(topicIds);
-							String keywords = org.apache.commons.lang3.StringUtils.join(topics, ", ");
-
-							String outputLine = "%d\t%s\t%s";
-							outputLine = String.format(outputLine, paperIndex, keywords, paper.title);
-							outputFileWriter.println(outputLine);
+							keywords = org.apache.commons.lang3.StringUtils.join(topics, ", ");
 						}
+						
+						outputLine = String.format(outputLine, paperIndex, keywords, paper.title);
+						outputFileWriter.println(outputLine);
 						paperIndex++;
 					}
 				}

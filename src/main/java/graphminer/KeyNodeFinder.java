@@ -80,11 +80,13 @@ public class KeyNodeFinder {
 			}
 		}
 
-		Map<String, Double> targetPaperIdToPathRWProbability = PathFinderHelper.targetPaperIdtoPathRWProbability;
-		if(targetPaperIdToPathRWProbability != null & 
-				targetPaperIdToPathRWProbability.isEmpty() == false)
+		if(PathFinderHelper.targetPaperIdtoPathRWProbability != null & 
+				PathFinderHelper.targetPaperIdtoPathRWProbability.isEmpty() == false)
 		{
-			if(targetPaperIdToPathRWProbability.size() > 10 )
+			Map<String, Double> targetPaperIdToPathRWProbability = new HashMap<String,Double>(PathFinderHelper.targetPaperIdtoPathRWProbability);
+			PathFinderHelper.targetPaperIdtoPathRWProbability.clear();
+
+			if(targetPaperIdToPathRWProbability.size() > 11)
 			{
 				author.paperIDToRWProability.putAll(this.getTop10Entries(targetPaperIdToPathRWProbability));
 			}
@@ -154,6 +156,10 @@ class PathFinderHelper implements Runnable{
 			pathExpanderBuilder.addNodeFilter(nodeFilter);
 			pathExpanderBuilder.addNodeFilter(nodeFilter);
 			pathExpanderBuilder.addNodeFilter(nodeFilter);
+			pathExpanderBuilder.addNodeFilter(nodeFilter);
+			pathExpanderBuilder.addNodeFilter(nodeFilter);
+			pathExpanderBuilder.addNodeFilter(nodeFilter);
+			pathExpanderBuilder.addNodeFilter(nodeFilter);
 
 			pathExpander = pathExpanderBuilder.build();
 		}
@@ -206,7 +212,7 @@ class PathFinderHelper implements Runnable{
 						if(queryPaperNode != null)
 						{
 
-							org.neo4j.graphalgo.PathFinder<Path> allPathFinder = GraphAlgoFactory.allSimplePaths(this.pathExpander, 4);
+							org.neo4j.graphalgo.PathFinder<Path> allPathFinder = GraphAlgoFactory.allSimplePaths(this.pathExpander, 8);
 
 							Iterable<Path> allPaths = allPathFinder.findAllPaths(queryPaperNode, targetPaperNode);
 							double targetPaperRWProability = 0;
@@ -219,13 +225,13 @@ class PathFinderHelper implements Runnable{
 									for(Relationship relationship : relationships)
 									{
 										randomWalkProbability = randomWalkProbability * (Double)(relationship.getProperty("weight"));
-										if (randomWalkProbability < 0.0000001)
+										if (randomWalkProbability < 0.000000001)
 										{
 											break;
 										}
 									}
 
-									if(randomWalkProbability > 0.0000001)
+									if(randomWalkProbability > 0.000000001)
 									{
 										Iterable<Node> nodes = path.nodes();
 										for(Node node : nodes)

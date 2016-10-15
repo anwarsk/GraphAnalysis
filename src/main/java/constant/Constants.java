@@ -16,7 +16,7 @@ public class Constants {
 	
 	public static String OUTPUT_FILE_PATH = "/nfs/nfs4/home/anshaikh/GraphMining/Output/%s_%s.tsv";
 	
-	//public static String NEO_GRAPH_DB_PATH = "/media/anwar/825ED72B5ED716AF/Work/Database/graph.dbacm240/";
+	//public static String NEO_GRAPH_DB_PATH = "/home/anwar/GraphOutput/graph.dbacm240/";
 	
 	//public static String OUTPUT_FILE_PATH = "/home/anwar/GraphOutput/Output/%s_%s.tsv";
 	
