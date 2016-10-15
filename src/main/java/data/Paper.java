@@ -1,4 +1,4 @@
-package sigir;
+package data;
 
 public class Paper {
 	
