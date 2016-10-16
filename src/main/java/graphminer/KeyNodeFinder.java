@@ -3,9 +3,12 @@ package graphminer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -28,6 +31,8 @@ import data.Paper;
 
 public class KeyNodeFinder {
 
+	public static int currentThreadCount;
+	public static final int  maxThreadCount = 16;
 
 	public void findKeyNodesForAuthorAndConference(Author author, List<Paper> conferencePapers)
 	{
@@ -36,49 +41,35 @@ public class KeyNodeFinder {
 
 		List<String> queryPaperIds = author.writtenPaperACMIds;
 
-		int batchSize = 16;
-		int processedPapers = 0;
+		currentThreadCount = 0;
 		PathFinderHelper pathFinderHelper;
-		while(processedPapers < conferencePapers.size())
+		Iterator<Paper> paperIterator = conferencePapers.iterator();
+		while(paperIterator.hasNext())
 		{
 			try
 			{
-				List<Thread> threadList = new ArrayList<Thread>();
-				int lastIndex = processedPapers+batchSize;
-				if(lastIndex > conferencePapers.size())
+				if(currentThreadCount < maxThreadCount)
 				{
-					lastIndex = conferencePapers.size();
-				}
-
-				for (Paper conferencePaper : conferencePapers.subList(processedPapers, lastIndex))
-				{
+					Paper conferencePaper= paperIterator.next();
 
 					String targetPaperID = conferencePaper.acmID;
 					pathFinderHelper = new PathFinderHelper();
 					pathFinderHelper.setData(queryPaperIds, targetPaperID, author, conferencePaper);
-					threadList.add(pathFinderHelper.start());
+					pathFinderHelper.start();
+
+					threadStarted();
+
 				}
 
-				for(Thread thread: threadList)
-				{
-					try 
-					{
-						thread.join();
-					} 
-					catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
 
-				processedPapers = lastIndex;
-				PathFinderHelper.cleanup();
 			}
 			catch(Exception e)
 			{
 				e.printStackTrace();
 			}
 		}
+
+		PathFinderHelper.cleanup();
 
 		if(PathFinderHelper.targetPaperIdtoPathRWProbability != null & 
 				PathFinderHelper.targetPaperIdtoPathRWProbability.isEmpty() == false)
@@ -112,6 +103,15 @@ public class KeyNodeFinder {
 	}
 
 
+	public static synchronized void threadCompleted()
+	{
+		currentThreadCount--;
+	}
+
+	public static synchronized void threadStarted()
+	{
+		currentThreadCount++;
+	}
 
 }
 
@@ -122,11 +122,27 @@ class ACMNodeFilter implements Predicate<Node>{
 		// TODO Auto-generated method stub
 		boolean isNodeMatch = false;
 
-		if(testNode.hasLabel(Label.label("author")) | 
-				testNode.hasLabel(Label.label("topic")) | 
-				testNode.hasLabel(Label.label("paper")) )
+		if(testNode.hasLabel(Label.label("paper")) | testNode.hasLabel(Label.label("topic")))
 		{
 			isNodeMatch = true;
+		}
+
+		return isNodeMatch;
+	}
+
+}
+
+class ACMRelationshipFilter implements Predicate<Relationship>{
+
+	@Override
+	public boolean test(Relationship relationship) {
+		// TODO Auto-generated method stub
+		boolean isNodeMatch = true;
+
+		if(relationship.isType(RelationshipType.withName("co_author")) | 
+				relationship.isType(RelationshipType.withName("publishedat")))
+		{
+			isNodeMatch = false;
 		}
 
 		return isNodeMatch;
@@ -143,23 +159,30 @@ class PathFinderHelper implements Runnable{
 	private Thread t = null;
 	public static File databaseDirectory = null;
 	public static GraphDatabaseService dbService =null;
-	public static Map<String, Double> targetPaperIdtoPathRWProbability = new HashMap<String, Double>();
+	public static Map<String, Double> targetPaperIdtoPathRWProbability = new ConcurrentHashMap<String, Double>();
 	private PathExpander<Object> pathExpander = null;
 
 	public PathFinderHelper() {
 		if(pathExpander == null)
 		{
-			ACMNodeFilter nodeFilter = new ACMNodeFilter();
 			PathExpanderBuilder pathExpanderBuilder = PathExpanderBuilder.empty();
-			pathExpanderBuilder.addNodeFilter(nodeFilter);
-			pathExpanderBuilder.addNodeFilter(nodeFilter);
-			pathExpanderBuilder.addNodeFilter(nodeFilter);
-			pathExpanderBuilder.addNodeFilter(nodeFilter);
-			pathExpanderBuilder.addNodeFilter(nodeFilter);
-			pathExpanderBuilder.addNodeFilter(nodeFilter);
-			pathExpanderBuilder.addNodeFilter(nodeFilter);
-			pathExpanderBuilder.addNodeFilter(nodeFilter);
-			pathExpanderBuilder.addNodeFilter(nodeFilter);
+
+			//			ACMRelationshipFilter relationshipFilter = new ACMRelationshipFilter();
+			//			pathExpanderBuilder = pathExpanderBuilder.addRelationshipFilter(relationshipFilter);
+			//			pathExpanderBuilder = pathExpanderBuilder.addRelationshipFilter(relationshipFilter);
+			//			pathExpanderBuilder = pathExpanderBuilder.addRelationshipFilter(relationshipFilter);
+			//			pathExpanderBuilder = pathExpanderBuilder.addRelationshipFilter(relationshipFilter);
+			//			pathExpanderBuilder = pathExpanderBuilder.addRelationshipFilter(relationshipFilter);
+			//			pathExpanderBuilder = pathExpanderBuilder.addRelationshipFilter(relationshipFilter);
+
+
+			ACMNodeFilter nodeFilter = new ACMNodeFilter();
+			pathExpanderBuilder = pathExpanderBuilder.addNodeFilter(nodeFilter);
+			pathExpanderBuilder = pathExpanderBuilder.addNodeFilter(nodeFilter);
+			pathExpanderBuilder = pathExpanderBuilder.addNodeFilter(nodeFilter);
+			pathExpanderBuilder = pathExpanderBuilder.addNodeFilter(nodeFilter);
+			pathExpanderBuilder = pathExpanderBuilder.addNodeFilter(nodeFilter);
+			pathExpanderBuilder = pathExpanderBuilder.addNodeFilter(nodeFilter);
 
 			pathExpander = pathExpanderBuilder.build();
 		}
@@ -167,11 +190,21 @@ class PathFinderHelper implements Runnable{
 
 	@Override
 	public void run() {
-		System.out.println("Processing for TargetPaperId: " + targetPaperID);
-		Map<String, Double> topicIDtoRWProabilityMap1 = this.findKeyNodesBetweenQueryAndTargetPaper(queryPaperIDs, targetPaperID);
-		author.paperIDToKeyTopicPathMap.put(targetPaperID, new KeyTopicPath(author, paper, topicIDtoRWProabilityMap1));
-		//String paperOutput = String.format("\n**END**Query Paper ACMID: %s, TargetPaper ACMID: %s", "querys", targetPaperID);
-		//System.out.println(paperOutput);
+		try
+		{
+			System.out.println("Processing for TargetPaperId: " + targetPaperID);
+			Map<String, Double> topicIDtoRWProabilityMap1 = this.findKeyNodesBetweenQueryAndTargetPaper(queryPaperIDs, targetPaperID);
+			author.paperIDToKeyTopicPathMap.put(targetPaperID, new KeyTopicPath(author, paper, topicIDtoRWProabilityMap1));
+			System.out.println("DONE! Processing for TargetPaperId: " + targetPaperID);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			KeyNodeFinder.threadCompleted();
+		}
 
 	}
 
@@ -194,8 +227,10 @@ class PathFinderHelper implements Runnable{
 			Node targetPaperNode = dbService.findNode(Label.label("paper"), "acmID", targetPaperID);
 			if(targetPaperNode != null)
 			{
+				double targetPaperRWProability = 0;
 				for(String queryPaperID : queryPaperIDs)
 				{
+					//System.out.println("Start QueryPaperID: " + queryPaperID);
 					try
 					{
 						//String paperOutput = String.format("\n\nQuery Paper ACMID: %s, TargetPaper ACMID: %s", queryPaperID, targetPaperID);
@@ -212,26 +247,37 @@ class PathFinderHelper implements Runnable{
 						if(queryPaperNode != null)
 						{
 
-							org.neo4j.graphalgo.PathFinder<Path> allPathFinder = GraphAlgoFactory.allSimplePaths(this.pathExpander, 8);
+							org.neo4j.graphalgo.PathFinder<Path> allPathFinder = GraphAlgoFactory.allSimplePaths(this.pathExpander, 6);
+
+							//System.out.println("Getting Paths...");
 
 							Iterable<Path> allPaths = allPathFinder.findAllPaths(queryPaperNode, targetPaperNode);
-							double targetPaperRWProability = 0;
+
+							//System.out.println("Got Paths...");
+
+
 							if (allPaths != null)
 							{
+								//								for(Path path : allPaths)
+								//								{
+								//									System.out.println(path.toString());
+								//								}
+
 								for(Path path : allPaths)
 								{
+									//System.out.println("Processing path- " + path.toString());
 									Iterable<Relationship> relationships = path.relationships();
 									double randomWalkProbability = 1.0;
 									for(Relationship relationship : relationships)
 									{
 										randomWalkProbability = randomWalkProbability * (Double)(relationship.getProperty("weight"));
-										if (randomWalkProbability < 0.000000001)
+										if (randomWalkProbability <= 0)
 										{
 											break;
 										}
 									}
 
-									if(randomWalkProbability > 0.000000001)
+									if(randomWalkProbability > 0)
 									{
 										Iterable<Node> nodes = path.nodes();
 										for(Node node : nodes)
@@ -250,14 +296,16 @@ class PathFinderHelper implements Runnable{
 											}
 										}
 										//String outputPathLine = String.format("Path: %s, RWProbability: %f", path.toString(), randomWalkProbability);
-
+										targetPaperRWProability += randomWalkProbability;
 									}
 
-									targetPaperRWProability += randomWalkProbability;
+
+
+									//System.out.println("Processing done- " + path.toString());
 								}
 							}
 
-							targetPaperIdtoPathRWProbability.put(targetPaperID, targetPaperRWProability);
+
 						}
 						else
 						{
@@ -268,7 +316,13 @@ class PathFinderHelper implements Runnable{
 					{
 						e.printStackTrace();
 					}
+					//System.out.println("End1 QueryPaperID: " + queryPaperID);
+
 				}
+
+				//System.out.println("Putting in Map!");
+				targetPaperIdtoPathRWProbability.put(targetPaperID, targetPaperRWProability);
+				//System.out.println("DONE-Putting in Map!");
 
 			}
 			else
@@ -282,8 +336,12 @@ class PathFinderHelper implements Runnable{
 		}
 
 		// Filter for top 10 keywords for the paper
-		topicIDToRandomWalkProbilityMap = getTop10Entries(topicIDToRandomWalkProbilityMap);
-
+		if(topicIDToRandomWalkProbilityMap != null & 
+				topicIDToRandomWalkProbilityMap.isEmpty() == false & 
+				topicIDToRandomWalkProbilityMap.size() > 11)
+		{
+			topicIDToRandomWalkProbilityMap = getTop10Entries(topicIDToRandomWalkProbilityMap);
+		}
 
 		return topicIDToRandomWalkProbilityMap;
 
