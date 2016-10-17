@@ -13,6 +13,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.neo4j.graphalgo.GraphAlgoFactory;
+import org.neo4j.graphalgo.PathFinder;
+import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -32,7 +34,7 @@ import data.Paper;
 public class KeyNodeFinder {
 
 	public static int currentThreadCount;
-	public static final int  maxThreadCount = 16;
+	public static final int  maxThreadCount =16;
 
 	public void findKeyNodesForAuthorAndConference(Author author, List<Paper> conferencePapers)
 	{
@@ -60,6 +62,10 @@ public class KeyNodeFinder {
 					threadStarted();
 
 				}
+				else
+				{
+					Thread.sleep(2000);
+				}
 
 
 			}
@@ -69,6 +75,15 @@ public class KeyNodeFinder {
 			}
 		}
 
+		while(currentThreadCount > 0)
+		{
+			try {
+				Thread.sleep(4000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		PathFinderHelper.cleanup();
 
 		if(PathFinderHelper.targetPaperIdtoPathRWProbability != null & 
@@ -196,6 +211,7 @@ class PathFinderHelper implements Runnable{
 			Map<String, Double> topicIDtoRWProabilityMap1 = this.findKeyNodesBetweenQueryAndTargetPaper(queryPaperIDs, targetPaperID);
 			author.paperIDToKeyTopicPathMap.put(targetPaperID, new KeyTopicPath(author, paper, topicIDtoRWProabilityMap1));
 			System.out.println("DONE! Processing for TargetPaperId: " + targetPaperID);
+			
 		}
 		catch(Exception e)
 		{
@@ -247,7 +263,7 @@ class PathFinderHelper implements Runnable{
 						if(queryPaperNode != null)
 						{
 
-							org.neo4j.graphalgo.PathFinder<Path> allPathFinder = GraphAlgoFactory.allSimplePaths(this.pathExpander, 6);
+							PathFinder<Path> allPathFinder = GraphAlgoFactory.allSimplePaths(this.pathExpander, 6);
 
 							//System.out.println("Getting Paths...");
 
