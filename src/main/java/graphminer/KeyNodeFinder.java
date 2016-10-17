@@ -1,20 +1,18 @@
 package graphminer;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.neo4j.graphalgo.GraphAlgoFactory;
 import org.neo4j.graphalgo.PathFinder;
-import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -94,20 +92,21 @@ public class KeyNodeFinder {
 
 			if(targetPaperIdToPathRWProbability.size() > 11)
 			{
-				author.paperIDToRWProability.putAll(this.getTop10Entries(targetPaperIdToPathRWProbability));
+				author.paperIDToRWProability = this.getTop10Entries(targetPaperIdToPathRWProbability);
 			}
 			else
 			{
-				author.paperIDToRWProability.putAll(targetPaperIdToPathRWProbability);
+				author.paperIDToRWProability = targetPaperIdToPathRWProbability;
 			}
 		}
 		//KeyTopicPathFinder.dbService.shutdown();
 	}
 
-	public <K, V extends Comparable<? super V>> Map<K, V> getTop10Entries(Map<K, V> map) {
+	
+	public <String, Double extends Comparable<? super Double>> Map<String, Double> getTop10Entries(Map<String, Double> map) {
 		return map.entrySet()
 				.stream()
-				.sorted(Map.Entry.comparingByValue(/*Collections.reverseOrder()*/))
+				.sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
 				.limit(10)
 				.collect(Collectors.toMap(
 						Map.Entry::getKey, 
@@ -116,7 +115,6 @@ public class KeyNodeFinder {
 						LinkedHashMap::new
 						));
 	}
-
 
 	public static synchronized void threadCompleted()
 	{
@@ -208,7 +206,7 @@ class PathFinderHelper implements Runnable{
 		try
 		{
 			System.out.println("Processing for TargetPaperId: " + targetPaperID);
-			Map<String, Double> topicIDtoRWProabilityMap1 = this.findKeyNodesBetweenQueryAndTargetPaper(queryPaperIDs, targetPaperID);
+			Map<String, Double> topicIDtoRWProabilityMap1 = new HashMap<String,Double>(this.findKeyNodesBetweenQueryAndTargetPaper(queryPaperIDs, targetPaperID));
 			author.paperIDToKeyTopicPathMap.put(targetPaperID, new KeyTopicPath(author, paper, topicIDtoRWProabilityMap1));
 			System.out.println("DONE! Processing for TargetPaperId: " + targetPaperID);
 			
@@ -265,6 +263,11 @@ class PathFinderHelper implements Runnable{
 
 							PathFinder<Path> allPathFinder = GraphAlgoFactory.allSimplePaths(this.pathExpander, 6);
 
+//							PathFinder<WeightedPath> allPathFinder = GraphAlgoFactory.dijkstra(
+//									PathExpanders.forConstantDirectionWithTypes(RelationshipType.withName("cite"),
+//											RelationshipType.withName("writtenby"),
+//											RelationshipType.withName("relevant"),
+//											RelationshipType.withName("contribute")), "weight", 100); //(this.pathExpander, 6);
 							//System.out.println("Getting Paths...");
 
 							Iterable<Path> allPaths = allPathFinder.findAllPaths(queryPaperNode, targetPaperNode);
@@ -366,7 +369,7 @@ class PathFinderHelper implements Runnable{
 	public <K, V extends Comparable<? super V>> Map<K, V> getTop10Entries(Map<K, V> map) {
 		return map.entrySet()
 				.stream()
-				.sorted(Map.Entry.comparingByValue(/*Collections.reverseOrder()*/))
+				.sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
 				.limit(10)
 				.collect(Collectors.toMap(
 						Map.Entry::getKey, 

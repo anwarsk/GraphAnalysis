@@ -64,10 +64,7 @@ public class App
 			//			System.out.println("\n\n\nAuthorName: " + author.firstName);
 			//			System.out.println("Top10Papers: " + author.paperIDToRWProability);
 			//			System.out.println("Top10");
-		}
-
-		for (Author author : authors)
-		{
+			
 			String outputFile = String.format(Constants.OUTPUT_FILE_PATH, author.firstName, author.lastName);
 
 			PrintWriter outputFileWriter = new PrintWriter(outputFile);
@@ -103,8 +100,8 @@ public class App
 			}
 
 			outputFileWriter.close();
-
 		}
+
 
 		System.out.println("Processsing is Completed !!!");
 
