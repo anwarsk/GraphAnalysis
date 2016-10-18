@@ -32,7 +32,7 @@ import data.Paper;
 public class KeyNodeFinder {
 
 	public static int currentThreadCount;
-	public static final int  maxThreadCount =16;
+	public static final int  maxThreadCount =32;
 
 	public void findKeyNodesForAuthorAndConference(Author author, List<Paper> conferencePapers)
 	{

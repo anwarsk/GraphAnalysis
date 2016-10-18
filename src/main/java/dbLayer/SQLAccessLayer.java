@@ -171,6 +171,83 @@ public class SQLAccessLayer {
 	}
 	
 	
+	public Paper getPaperWithTitle(String title)
+	{
+		assert title != null & !title.isEmpty() : "Invalid Title- " + title;
+		
+		Paper paper = null;
+
+		String query = "select id, title, abstract_text from paper where title = '%s'";
+
+		query = String.format(query, title);
+		System.out.println("Executing query:" + query);
+		Connection conn = null;
+		Statement stmt = null;
+		try{
+			//STEP 2: Register JDBC driver
+			Class.forName("com.mysql.jdbc.Driver").newInstance();
+
+
+
+			//STEP 3: Open a connection
+			//System.out.println("Connecting to database...");
+			conn = DriverManager.getConnection(DB_URL,USERNAME,PASSWORD);
+
+			//STEP 4: Execute a query
+			//System.out.println("Creating statement...");
+			stmt = conn.createStatement();
+
+			String sql;
+			sql = query;
+			ResultSet rs = stmt.executeQuery(sql);
+
+			//STEP 5: Extract data from result set
+			while(rs.next()){
+				//Retrieve by column name
+				
+				int id  = rs.getInt("id");
+				//String title = rs.getString("title");
+				String abstractText = rs.getString("abstract_text");
+				
+				//System.out.println(String.format("ID: %s   Title:%s", id, title));
+
+				paper = new Paper(id, title, abstractText, title);
+
+				//papers.add(paper);
+				
+				//Display values
+				//System.out.println("ID: " + id);
+
+			}
+			//STEP 6: Clean-up environment
+			rs.close();
+			stmt.close();
+			conn.close();
+		}catch(SQLException se){
+			//Handle errors for JDBC
+			se.printStackTrace();
+		}catch(Exception e){
+			//Handle errors for Class.forName
+			e.printStackTrace();
+		}finally{
+			//finally block used to close resources
+			try{
+				if(stmt!=null)
+					stmt.close();
+			}catch(SQLException se2){
+			}// nothing we can do
+			try{
+				if(conn!=null)
+					conn.close();
+			}catch(SQLException se){
+				se.printStackTrace();
+			}//end finally try
+		}//end try
+		//System.out.println("Goodbye!");
+
+		return paper;
+	}
+	
 	public List<String> getListOfKeywords(Set<String> topics)
 	{
 		assert topics != null & topics.isEmpty() == false : "Invalid list of topics";

@@ -1,6 +1,7 @@
 package exec;
 
 import java.io.FileNotFoundException;
+
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,14 +14,40 @@ import data.Paper;
 import dbLayer.SQLAccessLayer;
 import graphminer.KeyNodeFinder;
 
+
 public class App 
 {
 	public static void main( String[] args ) throws FileNotFoundException
 	{
 
+
 		List<Author> authors = new ArrayList<Author>();
 		SQLAccessLayer accessLayer = new SQLAccessLayer();
 
+		/**
+		List<String> paperTitles =  new ArrayList<String>();
+		paperTitles.add("Elicitation of term relevance feedback");
+		paperTitles.add("The TIJAH XML information retrieval system");
+		paperTitles.add("Concept-based biomedical text retrieval");
+		paperTitles.add("A platform for Okapi-based contextual information retrieval");
+		paperTitles.add("Adapting ranking SVM to document retrieval");
+		paperTitles.add("Unity");
+		paperTitles.add("MathFind");
+		paperTitles.add("LDA-based document models for ad-hoc retrieval");
+		paperTitles.add("History repeats itself");
+		paperTitles.add("Hybrid index maintenance for growing text collections");
+
+
+		for (String papertitle : paperTitles)
+		{
+			Paper paper = accessLayer.getPaperWithTitle(papertitle);
+			PrintWriter outputFileWriter = new PrintWriter("/home/anwar/GraphOutput/Papers" + papertitle + ".txt");
+			outputFileWriter.write(paper.abstractText);
+			outputFileWriter.close();
+		}
+		
+		**/
+		/**
 		/** TO-TEST:
 		Set<String> testSet = new HashSet<String>();
 		testSet.add("T_606");
@@ -64,7 +91,7 @@ public class App
 			//			System.out.println("\n\n\nAuthorName: " + author.firstName);
 			//			System.out.println("Top10Papers: " + author.paperIDToRWProability);
 			//			System.out.println("Top10");
-			
+
 			String outputFile = String.format(Constants.OUTPUT_FILE_PATH, author.firstName, author.lastName);
 
 			PrintWriter outputFileWriter = new PrintWriter(outputFile);
@@ -81,14 +108,14 @@ public class App
 						Paper paper = keyTopicPath.paper;
 						Set<String> topicIds = keyTopicPath.topicIDtoProbabilityMap.keySet();
 						String keywords = "";
-						String outputLine = "%d\t%s\t%s";
+						String outputLine = "%d\t%s\t%s\t%s";
 						if(topicIds != null & topicIds.isEmpty() == false)
 						{
 							List<String> topics = accessLayer.getListOfKeywords(topicIds);
 							keywords = org.apache.commons.lang3.StringUtils.join(topics, ", ");
 						}
-						
-						outputLine = String.format(outputLine, paperIndex, keywords, paper.title);
+
+						outputLine = String.format(outputLine, paperIndex, keywords, paper.title, paper.acmID);
 						outputFileWriter.println(outputLine);
 						paperIndex++;
 					}
@@ -100,8 +127,12 @@ public class App
 			}
 
 			outputFileWriter.close();
+
+
+
 		}
 
+		 //**/
 
 		System.out.println("Processsing is Completed !!!");
 
