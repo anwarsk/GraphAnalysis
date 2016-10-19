@@ -45,8 +45,8 @@ public class App
 			outputFileWriter.write(paper.abstractText);
 			outputFileWriter.close();
 		}
-		
-		**/
+
+		 **/
 		/**
 		/** TO-TEST:
 		Set<String> testSet = new HashSet<String>();
@@ -75,64 +75,73 @@ public class App
 		}
 
 
-		System.out.println("Fetching Papers for SIGIR 2006");
-		List<Paper> sigr2006Papers = accessLayer.getListOfPapersforConference(Constants.SIGIR_2006_COFERENCE);
-		//List<Paper> sigr2008Papers = accessLayer.getListOfPapersforConference(Constants.SIGIR_2008_COFERENCE);
-
-		KeyNodeFinder keyNodeFinder = new KeyNodeFinder();
-
-		for(Author author : authors)
+		for(String conferenceName : Constants.CONFERENCE_LIST.keySet())
 		{
-			System.out.println("Processing conference for author- " + author.firstName);
+			System.out.println("Fetching Papers for: " + conferenceName);
+			List<Paper> conferencePapers = new ArrayList<Paper>();
 
-			keyNodeFinder.findKeyNodesForAuthorAndConference(author, sigr2006Papers);
-
-			//			System.out.println("**** SUMMARY ****");
-			//			System.out.println("\n\n\nAuthorName: " + author.firstName);
-			//			System.out.println("Top10Papers: " + author.paperIDToRWProability);
-			//			System.out.println("Top10");
-
-			String outputFile = String.format(Constants.OUTPUT_FILE_PATH, author.firstName, author.lastName);
-
-			PrintWriter outputFileWriter = new PrintWriter(outputFile);
-			outputFileWriter.print(String.format("\n\t *** TOP-10 PAPERS FOR %s %s in SIGIR2006 Conference ***\n",author.firstName, author.lastName ));
-
-			int paperIndex = 1;
-			for(String paperID : author.paperIDToRWProability.keySet())
+			for(String conferenceId : Constants.CONFERENCE_LIST.get(conferenceName))
 			{
-				try
-				{
-					KeyTopicPath keyTopicPath = author.paperIDToKeyTopicPathMap.get(paperID);
-					if(keyTopicPath != null)
-					{
-						Paper paper = keyTopicPath.paper;
-						Set<String> topicIds = keyTopicPath.topicIDtoProbabilityMap.keySet();
-						String keywords = "";
-						String outputLine = "%d\t%s\t%s\t%s";
-						if(topicIds != null & topicIds.isEmpty() == false)
-						{
-							List<String> topics = accessLayer.getListOfKeywords(topicIds);
-							keywords = org.apache.commons.lang3.StringUtils.join(topics, ", ");
-						}
 
-						outputLine = String.format(outputLine, paperIndex, keywords, paper.title, paper.acmID);
-						outputFileWriter.println(outputLine);
-						paperIndex++;
+				conferencePapers.addAll(accessLayer.getListOfPapersforConference(conferenceId));
+				//List<Paper> sigr2008Papers = accessLayer.getListOfPapersforConference(Constants.SIGIR_2008_COFERENCE);
+
+			}
+			KeyNodeFinder keyNodeFinder = new KeyNodeFinder();
+
+			for(Author author : authors)
+			{
+				System.out.println("Processing conference for author- " + author.firstName);
+
+				keyNodeFinder.findKeyNodesForAuthorAndConference(author, conferencePapers);
+
+				//			System.out.println("**** SUMMARY ****");
+				//			System.out.println("\n\n\nAuthorName: " + author.firstName);
+				//			System.out.println("Top10Papers: " + author.paperIDToRWProability);
+				//			System.out.println("Top10");
+
+				String outputFile = String.format(Constants.OUTPUT_FILE_PATH, author.firstName, author.lastName);
+
+				PrintWriter outputFileWriter = new PrintWriter(outputFile);
+				outputFileWriter.print(String.format("\n\t *** TOP-10 PAPERS FOR %s %s in SIGIR2006 Conference ***\n",author.firstName, author.lastName ));
+
+				int paperIndex = 1;
+				for(String paperID : author.paperIDToRWProability.keySet())
+				{
+					try
+					{
+						KeyTopicPath keyTopicPath = author.paperIDToKeyTopicPathMap.get(paperID);
+						if(keyTopicPath != null)
+						{
+							Paper paper = keyTopicPath.paper;
+							Set<String> topicIds = keyTopicPath.topicIDtoProbabilityMap.keySet();
+							String keywords = "";
+							String outputLine = "%d\t%s\t%s\t%s";
+							if(topicIds != null & topicIds.isEmpty() == false)
+							{
+								List<String> topics = accessLayer.getListOfKeywords(topicIds);
+								keywords = org.apache.commons.lang3.StringUtils.join(topics, ", ");
+							}
+
+							outputLine = String.format(outputLine, paperIndex, keywords, paper.title, paper.acmID);
+							outputFileWriter.println(outputLine);
+							paperIndex++;
+						}
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
 					}
 				}
-				catch(Exception e)
-				{
-					e.printStackTrace();
-				}
+
+				outputFileWriter.close();
+
+
+
 			}
 
-			outputFileWriter.close();
-
-
-
 		}
-
-		 //**/
+		//**/
 
 		System.out.println("Processsing is Completed !!!");
 
