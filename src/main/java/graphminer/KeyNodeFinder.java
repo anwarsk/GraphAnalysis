@@ -32,7 +32,7 @@ import data.Paper;
 public class KeyNodeFinder {
 
 	public static int currentThreadCount;
-	public static final int  maxThreadCount =32;
+	public static final int  maxThreadCount = Constants.MAXIMUM_THREAD_COUNT;
 
 	public void findKeyNodesForAuthorAndConference(Author author, List<Paper> conferencePapers)
 	{
@@ -261,7 +261,7 @@ class PathFinderHelper implements Runnable{
 						if(queryPaperNode != null)
 						{
 
-							PathFinder<Path> allPathFinder = GraphAlgoFactory.allSimplePaths(this.pathExpander, 6);
+							PathFinder<Path> allPathFinder = GraphAlgoFactory.allSimplePaths(this.pathExpander,  Constants.MAX_TREE_DEPTH);
 
 //							PathFinder<WeightedPath> allPathFinder = GraphAlgoFactory.dijkstra(
 //									PathExpanders.forConstantDirectionWithTypes(RelationshipType.withName("cite"),
